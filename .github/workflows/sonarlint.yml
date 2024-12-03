@@ -1,6 +1,8 @@
 name: build
 run-name: ${{ github.actor }} is building the gradle project
 on: [push]
+permissions:
+  security-events: write
 jobs:
   build-main-artifact:
     runs-on: ubuntu-latest
@@ -13,6 +15,7 @@ jobs:
           cache: gradle
       - run: chmod +x sonar/gradlew
       - run: cd sonar && ./gradlew build --no-daemon
+      - run: ls -la sonar/build/reports/sonarlint
       - name: Sonarlint
         uses: github/codeql-action/upload-sarif@v3
         with:
