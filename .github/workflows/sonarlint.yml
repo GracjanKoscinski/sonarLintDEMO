@@ -11,6 +11,7 @@ jobs:
           java-version: "21"
           distribution: temurin
           cache: gradle
+      - run: chmod +x sonar/gradlew
       - run: cd sonar && ./gradlew build --no-daemon
       - name: Sonarlint
         uses: github/codeql-action/upload-sarif@v2
