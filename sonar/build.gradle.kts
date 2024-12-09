@@ -1,37 +1,37 @@
-import se.solrike.sonarlint.*
+import com.diffplug.spotless.LineEnding
 plugins {
-    java
-    id("se.solrike.sonarlint") version "2.1.0" // Applying the plugin only here
+    id("java")
+    id("com.diffplug.spotless") version "6.25.0"
+    id("se.solrike.sonarlint") version "2.1.0"
 }
 
-group = "com.example"
-version = "1.0.0"
+group = "org.example"
+version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
-//sonarlint {
-//    reports {
-//        create("sarif") {
-//            enabled.set(true)
-//        }
-//    }
-//}
-tasks.build {
-    dependsOn(tasks.sonarlintMain)
-}
-
-tasks.sonarlintMain {
-    ignoreFailures.set(true)
+sonarlint {
     reports {
         create("sarif") {
             enabled.set(true)
         }
     }
 }
-
-
+spotless {
+    java {
+        importOrder()
+        removeUnusedImports()
+        cleanthat()
+        lineEndings = LineEnding.UNIX
+        palantirJavaFormat()
+        trimTrailingWhitespace()
+        endWithNewline()
+        indentWithSpaces()
+        formatAnnotations()
+    }
+}
 dependencies {
     sonarlintPlugins("org.sonarsource.java:sonar-java-plugin:7.30.1.34514")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
