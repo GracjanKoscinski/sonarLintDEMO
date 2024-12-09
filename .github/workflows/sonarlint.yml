@@ -1,28 +1,58 @@
 name: build
-run-name: ${{ github.actor }} is building the gradle project
-on: [push]
+run-name: ${{ github.actor }} is building the Gradle project
+on: [push, pull_request]
 permissions:
   security-events: write
+  contents: write
 jobs:
   build-main-artifact:
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repository
       - uses: actions/checkout@v3
+
+      # Setup Java
       - uses: actions/setup-java@v3
         with:
           java-version: "21"
           distribution: temurin
           cache: gradle
+
+      # Grant permissions for Gradle wrapper
       - run: chmod +x sonar/gradlew
-      - run: cd sonar && ./gradlew build --no-daemon
+
+      # Run Spotless check
+      - name: Run Spotless
+        run: cd sonar && ./gradlew spotlessCheck --no-daemon
+
+      # Build the project
+      - name: Build Project
+        run: cd sonar && ./gradlew build --no-daemon
+
+      # List SonarLint SARIF report
       - run: ls -la sonar/build/reports/sonarlint
-      - name: Sonarlint
+
+      # Upload SonarLint SARIF report
+      - name: SonarLint
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sonar/build/reports/sonarlint/sonarlintMain.sarif
           category: Sonarlint
-      - name: Archive main artifacts
+
+      # Archive main build artifacts
+      - name: Archive Main Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: Artifacts
           path: sonar/build/libs
+
+  # Enforce checks on pull requests
+  enforce:
+    needs: build-main-artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Build Passed
+        if: ${{ needs.build-main-artifact.result != 'success' }}
+        run: |
+          echo "Build failed, cannot merge."
+          exit 1
